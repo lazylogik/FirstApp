@@ -154,7 +154,7 @@ namespace app1
              "mtOldBlockTransfer",
              "mtMayorsDocV3_24_31",
              "mtPROFIsafe",
-             "mtUNKNOWN",
+             "mtPCD",
              "mtSafe",
              "mtUNKNOWN",
              "mtProfibusInterface",
@@ -230,10 +230,37 @@ namespace app1
         }
         public void analyze()
         {
-            //dddddd-ttttt-1b111-FFFFF-xxxxxxxx
-            if ((canID_int & 0x2e000) == 0x2e000)
+            //dddddd-ttttt-1b111-FFFFF-xxxxxxxx CAN V3
+
+            if (canID_int <= 0x7ff)
             {
-                m_canID_V = 3;
+                m_canID_V = 2;//Must be standard so must be CAN V2
+            }
+            else
+            {
+                //Extended
+                //Lets count 0s is T field of CANV2
+                int toField = ((canID_int >> 4) & 0x3fff);
+                int counter;
+                int count = 0;
+
+                for (counter = 0; counter < 14; counter++ )
+                {                    
+                    if((toField & ((1 << counter))) == 0)
+                        count++;
+                }
+                if(count > 1)
+                    m_canID_V = 3;
+                else
+                    m_canID_V = 2;                  
+                
+            }
+
+
+            //if ((canID_int & 0x2e000) == 0x2e000)
+            if(m_canID_V == 3)
+            {
+                //m_canID_V = 3;
                 if (((canID_int) & 0xf) == 0xf)
                 {
                     m_canID_extended = false;
@@ -245,7 +272,7 @@ namespace app1
             }
             else
             {
-                m_canID_V = 2;
+                //m_canID_V = 2;
                 if (((canID_int >> 23) & 3) == 0x3)
                 {
                     m_canID_extended = true;
